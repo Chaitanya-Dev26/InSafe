@@ -354,22 +354,9 @@ const AdminDashboard = () => {
     : [...pendingEmergencies, ...inProgressEmergencies];
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      {/* Back Button */}
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => navigate("/dashboard")}
-        className="w-16 h-16 rounded-2xl bg-card border-2 border-border mb-6"
-      >
-        <ArrowLeft className="w-6 h-6" />
-      </Button>
-
-      {/* Title */}
-      <h1 className="text-4xl font-bold text-foreground mb-8">Admin Dashboard</h1>
-
+    <div className="min-h-screen bg-background p-4 md:p-6">
       {error && (
-        <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-2xl border border-red-200">
+        <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-lg border border-red-200">
           <p className="font-medium">Error loading data</p>
           <p className="text-sm">{error}</p>
         </div>
@@ -381,30 +368,36 @@ const AdminDashboard = () => {
         </div>
       ) : (
         <>
-          {/* Filter Controls */}
-          <div className="flex items-center gap-4 mb-6">
-            <div className="flex items-center gap-2 bg-card px-4 py-2 rounded-2xl border-2 border-border">
-              <Filter className="h-4 w-4 text-muted-foreground" />
-              <select 
-                className="bg-transparent text-sm focus:outline-none"
-                value={filter}
-                onChange={(e) => setFilter(e.target.value as 'all' | 'critical')}
-              >
-                <option value="all">All Alerts</option>
-                <option value="critical">Critical Only</option>
-              </select>
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground">Emergency Dashboard</h1>
+              <p className="text-muted-foreground">Monitor and manage emergency alerts</p>
             </div>
-            {user && (
-              <div className="flex items-center gap-3 bg-card px-4 py-2 rounded-2xl border-2 border-border">
-                <div className="text-right">
-                  <p className="text-sm font-medium">{user.displayName || 'Admin'}</p>
-                  <p className="text-xs text-muted-foreground">Administrator</p>
-                </div>
-                <div className="h-10 w-10 rounded-2xl bg-primary/10 flex items-center justify-center">
-                  <User className="h-5 w-5 text-primary" />
-                </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 bg-muted/50 px-4 py-2 rounded-full">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                <select 
+                  className="bg-transparent text-sm focus:outline-none"
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value as 'all' | 'critical')}
+                >
+                  <option value="all">All Alerts</option>
+                  <option value="critical">Critical Only</option>
+                </select>
               </div>
-            )}
+              {user && (
+                <div className="flex items-center gap-3">
+                  <div className="text-right hidden sm:block">
+                    <p className="text-sm font-medium">{user.displayName || 'Admin'}</p>
+                    <p className="text-xs text-muted-foreground">Admin</p>
+                  </div>
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <User className="h-5 w-5 text-primary" />
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Stats Cards */}
