@@ -1,7 +1,27 @@
 // src/pages/AdminDashboard.tsx
 import { useEffect, useState } from 'react';
-import { AlertCircle, HeartPulse, Activity, AlertTriangle, MapPin, User, Phone, Mail, Clock, Users, TrendingUp, Filter } from 'lucide-react';
-import { toast } from '@/components/ui/use-toast';
+import { AlertCircle, HeartPulse, Activity, AlertTriangle, MapPin, User, Phone, Mail, Clock, ArrowLeft, Filter } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { toast } from 'sonner';
+
+// Simple toast fallback if sonner is not available
+const showToast = (type: 'success' | 'error', title: string, description?: string) => {
+  if (typeof toast !== 'undefined') {
+    if (type === 'error') {
+      toast.error(title + (description ? ` - ${description}` : ''));
+    } else {
+      toast.success(title + (description ? ` - ${description}` : ''));
+    }
+  } else {
+    const message = `[${type.toUpperCase()}] ${title}${description ? ` - ${description}` : ''}`;
+    if (type === 'error') {
+      console.error(message);
+    } else {
+      console.log(message);
+    }
+  }
+};
 
 const PRIORITY_MAP = {
   'injury': 1,
@@ -92,17 +112,9 @@ const EmergencyItem = ({
     try {
       setIsUpdating(true);
       await onStatusUpdate(emergency._id, status);
-      toast({
-        title: 'Success',
-        description: `Emergency marked as ${status.replace('-', ' ')}`,
-        variant: 'default',
-      });
+      showToast('success', 'Success', `Emergency marked as ${status.replace('-', ' ')}`);
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to update status',
-        variant: 'destructive',
-      });
+      showToast('error', 'Error', 'Failed to update status');
     } finally {
       setIsUpdating(false);
     }
@@ -254,10 +266,20 @@ const EmergencyItem = ({
 };
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
   const [emergencies, setEmergencies] = useState<Emergency[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'critical'>('all');
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    // Get user from localStorage or auth context
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      setUser(JSON.parse(userData));
+    }
+  }, []);
 
   const fetchEmergencies = async () => {
     try {
@@ -321,6 +343,7 @@ const AdminDashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Filter emergencies based on status
   const pendingEmergencies = emergencies.filter(e => e.status === 'pending');
   const inProgressEmergencies = emergencies.filter(e => e.status === 'in-progress');
   const resolvedEmergencies = emergencies.filter(e => e.status === 'resolved');
@@ -331,176 +354,161 @@ const AdminDashboard = () => {
     : [...pendingEmergencies, ...inProgressEmergencies];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6">
-      <header className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-2">
-          Medical Emergency Dashboard
-        </h1>
-        <p className="text-gray-600 text-lg">Real-time emergency monitoring and response system</p>
-      </header>
+    <div className="min-h-screen bg-background p-6">
+      {/* Back Button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => navigate("/dashboard")}
+        className="w-16 h-16 rounded-2xl bg-card border-2 border-border mb-6"
+      >
+        <ArrowLeft className="w-6 h-6" />
+      </Button>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white rounded-xl shadow-lg p-5 border-l-4 border-red-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">Critical</p>
-              <p className="text-4xl font-black text-red-600 mt-1">{criticalCount}</p>
-            </div>
-            <div className="bg-red-100 p-3 rounded-lg">
-              <AlertCircle className="h-8 w-8 text-red-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-lg p-5 border-l-4 border-orange-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">Pending</p>
-              <p className="text-4xl font-black text-orange-600 mt-1">{pendingEmergencies.length}</p>
-            </div>
-            <div className="bg-orange-100 p-3 rounded-lg">
-              <Clock className="h-8 w-8 text-orange-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-lg p-5 border-l-4 border-blue-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">In Progress</p>
-              <p className="text-4xl font-black text-blue-600 mt-1">{inProgressEmergencies.length}</p>
-            </div>
-            <div className="bg-blue-100 p-3 rounded-lg">
-              <Activity className="h-8 w-8 text-blue-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-lg p-5 border-l-4 border-green-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">Resolved</p>
-              <p className="text-4xl font-black text-green-600 mt-1">{resolvedEmergencies.length}</p>
-            </div>
-            <div className="bg-green-100 p-3 rounded-lg">
-              <TrendingUp className="h-8 w-8 text-green-600" />
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Title */}
+      <h1 className="text-4xl font-bold text-foreground mb-8">Admin Dashboard</h1>
 
       {error && (
-        <div className="bg-red-50 border-l-4 border-red-500 p-5 mb-6 rounded-lg shadow-md">
-          <div className="flex items-center">
-            <AlertCircle className="h-6 w-6 text-red-500 mr-3" />
-            <p className="text-sm font-semibold text-red-700">{error}</p>
-          </div>
+        <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-2xl border border-red-200">
+          <p className="font-medium">Error loading data</p>
+          <p className="text-sm">{error}</p>
         </div>
       )}
 
       {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="relative">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-red-500"></div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <HeartPulse className="h-6 w-6 text-red-500 animate-pulse" />
-            </div>
-          </div>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-2xl font-black flex items-center gap-3">
-                <div className="bg-red-100 p-2 rounded-lg">
-                  <AlertCircle className="h-6 w-6 text-red-600" />
+        <>
+          {/* Filter Controls */}
+          <div className="flex items-center gap-4 mb-6">
+            <div className="flex items-center gap-2 bg-card px-4 py-2 rounded-2xl border-2 border-border">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <select 
+                className="bg-transparent text-sm focus:outline-none"
+                value={filter}
+                onChange={(e) => setFilter(e.target.value as 'all' | 'critical')}
+              >
+                <option value="all">All Alerts</option>
+                <option value="critical">Critical Only</option>
+              </select>
+            </div>
+            {user && (
+              <div className="flex items-center gap-3 bg-card px-4 py-2 rounded-2xl border-2 border-border">
+                <div className="text-right">
+                  <p className="text-sm font-medium">{user.displayName || 'Admin'}</p>
+                  <p className="text-xs text-muted-foreground">Administrator</p>
                 </div>
-                Active Emergencies
-                <span className="bg-red-600 text-white px-3 py-1 rounded-full text-lg font-bold">
-                  {activeEmergencies.length}
-                </span>
-              </h2>
-              
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setFilter('all')}
-                  className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${
-                    filter === 'all' 
-                      ? 'bg-blue-600 text-white shadow-md' 
-                      : 'bg-white text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  All
-                </button>
-                <button
-                  onClick={() => setFilter('critical')}
-                  className={`px-4 py-2 rounded-lg font-bold text-sm transition-all flex items-center gap-2 ${
-                    filter === 'critical' 
-                      ? 'bg-red-600 text-white shadow-md' 
-                      : 'bg-white text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  <Filter className="h-4 w-4" />
-                  Critical Only
-                </button>
+                <div className="h-10 w-10 rounded-2xl bg-primary/10 flex items-center justify-center">
+                  <User className="h-5 w-5 text-primary" />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div className="bg-card rounded-lg border shadow-sm p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Critical Alerts</p>
+                  <p className="text-3xl font-bold text-destructive mt-1">{criticalCount}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Requires immediate attention</p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center">
+                  <AlertTriangle className="h-6 w-6 text-destructive" />
+                </div>
               </div>
             </div>
-            
-            <div className="space-y-3">
-              {activeEmergencies.length > 0 ? (
-                activeEmergencies.map(emergency => (
-                  <EmergencyItem 
-                    key={emergency._id} 
-                    emergency={emergency}
-                    onStatusUpdate={handleStatusUpdate}
-                  />
-                ))
-              ) : (
-                <div className="bg-white p-8 rounded-xl shadow-md text-center">
-                  <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Activity className="h-8 w-8 text-green-600" />
-                  </div>
-                  <p className="text-gray-500 font-semibold text-lg">
-                    {filter === 'critical' ? 'No critical emergencies' : 'No active emergencies'}
-                  </p>
-                  <p className="text-gray-400 text-sm mt-1">All clear! 🎉</p>
+
+            <div className="bg-card rounded-lg border shadow-sm p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Pending</p>
+                  <p className="text-3xl font-bold text-amber-600 mt-1">{pendingEmergencies.length}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Awaiting response</p>
                 </div>
-              )}
+                <div className="h-12 w-12 rounded-full bg-amber-100 flex items-center justify-center">
+                  <Clock className="h-6 w-6 text-amber-600" />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-card rounded-lg border shadow-sm p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">In Progress</p>
+                  <p className="text-3xl font-bold text-blue-600 mt-1">{inProgressEmergencies.length}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Currently being handled</p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+                  <Activity className="h-6 w-6 text-blue-600" />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-card rounded-lg border shadow-sm p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Resolved</p>
+                  <p className="text-3xl font-bold text-green-600 mt-1">{resolvedEmergencies.length}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Completed cases</p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
+                  <HeartPulse className="h-6 w-6 text-green-600" />
+                </div>
+              </div>
             </div>
           </div>
 
-          <div>
-            <h2 className="text-2xl font-black mb-5 flex items-center gap-3">
-              <div className="bg-green-100 p-2 rounded-lg">
-                <AlertTriangle className="h-6 w-6 text-green-600" />
-              </div>
-              Resolved
-              <span className="bg-green-600 text-white px-3 py-1 rounded-full text-lg font-bold">
-                {resolvedEmergencies.length}
+          {/* Active Emergencies List */}
+          <div className="bg-card rounded-lg border shadow-sm p-6 mb-6">
+            <h2 className="text-lg font-semibold mb-4">
+              {filter === 'critical' ? 'Critical Emergencies' : 'Active Emergencies'}
+              <span className="ml-2 bg-primary/10 text-primary text-sm px-2 py-1 rounded-full">
+                {activeEmergencies.length}
               </span>
             </h2>
-            
-            <div className="space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto pr-2">
-              {resolvedEmergencies.length > 0 ? (
-                resolvedEmergencies.slice(0, 10).map(emergency => (
-                  <EmergencyItem 
-                    key={emergency._id} 
+
+            {activeEmergencies.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>No {filter === 'critical' ? 'critical ' : ''}emergencies to display</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {activeEmergencies.map(emergency => (
+                  <EmergencyItem
+                    key={emergency._id}
                     emergency={emergency}
                     onStatusUpdate={handleStatusUpdate}
                   />
-                ))
-              ) : (
-                <div className="bg-white p-8 rounded-xl shadow-md text-center">
-                  <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <AlertTriangle className="h-8 w-8 text-gray-400" />
-                  </div>
-                  <p className="text-gray-500 font-semibold">No resolved emergencies yet</p>
-                </div>
-              )}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
-        </div>
+
+          {/* Resolved Emergencies */}
+          {resolvedEmergencies.length > 0 && (
+            <div className="bg-card rounded-lg border shadow-sm p-6">
+              <h2 className="text-lg font-semibold mb-4">
+                Resolved Emergencies
+                <span className="ml-2 bg-green-100 text-green-800 text-sm px-2 py-1 rounded-full">
+                  {resolvedEmergencies.length}
+                </span>
+              </h2>
+              <div className="space-y-4">
+                {resolvedEmergencies.map(emergency => (
+                  <EmergencyItem
+                    key={emergency._id}
+                    emergency={emergency}
+                    onStatusUpdate={handleStatusUpdate}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
