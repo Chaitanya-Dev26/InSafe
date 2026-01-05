@@ -98,7 +98,7 @@ const Dashboard = () => {
       </div>
 
       {/* Action Buttons */}
-      <div className="space-y-4">
+      <div className="space-y-4 ">
         <h2 className="text-xl font-semibold text-foreground mb-1">Quick Actions</h2>
         {/* Secondary Actions */}
         <div className="grid grid-cols-3 gap-3">
@@ -108,16 +108,6 @@ const Dashboard = () => {
           >
             <img src={logo} alt="InSafe Network" className="w-12 h-12" />
             <span className="text-sm font-semibold text-foreground">Medical<br/>Help</span>
-          </button>
-          
-          <button className="bg-card hover:bg-accent/10 transition-colors rounded-2xl p-4 flex flex-col items-center gap-2 border-2 border-border relative">
-            <div className="relative">
-              <Phone className="w-12 h-12 text-accent" />
-              <div className="absolute -top-1 -right-1 w-6 h-6 bg-background rounded-full flex items-center justify-center border-2">
-                <span className="text-destructive text-xs font-bold">×</span>
-              </div>
-            </div>
-            <span className="text-sm font-semibold text-foreground">Safety<br/>Emergency</span>
           </button>
 
           <button 
